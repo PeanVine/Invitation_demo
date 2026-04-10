@@ -25,6 +25,7 @@
         <p
           v-if="isOpened && showCheckHint"
           class="action-hint action-hint-check"
+          @click.stop="handleCheckClick"
         >
           Check!
         </p>
@@ -121,7 +122,7 @@
           </div>
         </div>
       </div>
-      <div class="envelope" @click="hideCheckHint">
+      <div class="envelope">
         <img
           src="/assets/Tenzor_Logo.png"
           alt="Tenzor Logo"
@@ -159,15 +160,33 @@ let checkHintTimer: ReturnType<typeof setTimeout> | null = null;
 let flipHintTimer: ReturnType<typeof setTimeout> | null = null;
 
 const updateSceneScale = () => {
-  isMobile.value = window.innerWidth <= 768;
-  const widthScale = (window.innerWidth - 24) / envelopeBaseWidth;
-  const heightScale = (window.innerHeight - 24) / 600;
+  const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+  isMobile.value = viewportWidth <= 768;
+  const simulatedMobileUiInset = isMobile.value
+    ? Number.parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--mobile-ui-simulated-inset",
+        ),
+      ) || 0
+    : 0;
+  const usableViewportHeight = Math.max(
+    320,
+    viewportHeight - simulatedMobileUiInset,
+  );
+  const widthScale = (viewportWidth - 24) / envelopeBaseWidth;
+  const heightScale = (usableViewportHeight - 24) / 600;
   let newScale = Math.min(0.78, widthScale, heightScale);
   if (isMobile.value) {
     // 手机端将整体信封场景再等比缩小一些，弄成0.8
     newScale *= 0.8;
   }
   sceneScale.value = newScale;
+  document.documentElement.style.setProperty(
+    "--app-vh",
+    `${usableViewportHeight}px`,
+  );
+  document.documentElement.style.setProperty("--app-vw", `${viewportWidth}px`);
 };
 
 const handlePageClick = (side: "left" | "right") => {
@@ -191,8 +210,6 @@ const hideFlipHint = () => {
 
 const openEnvelope = () => {
   if (isOpened.value) {
-    hideCheckHint();
-    hideFlipHint();
     return;
   }
   isOpened.value = true;
@@ -205,21 +222,30 @@ const openEnvelope = () => {
   }, 1000);
 };
 
+const startExtractLetter = () => {
+  hideCheckHint();
+  isExtracted.value = true;
+  showFlipHint.value = false;
+  if (flipHintTimer) {
+    clearTimeout(flipHintTimer);
+  }
+  flipHintTimer = setTimeout(() => {
+    if (isExtracted.value && !isFlipped.value) {
+      showFlipHint.value = true;
+    }
+  }, 2000);
+};
+
+const handleCheckClick = () => {
+  if (!isOpened.value || isExtracted.value || !showCheckHint.value) return;
+  startExtractLetter();
+};
+
 const handleLetterClick = () => {
   if (!isOpened.value) return;
 
   if (!isExtracted.value) {
-    hideCheckHint();
-    isExtracted.value = true;
-    showFlipHint.value = false;
-    if (flipHintTimer) {
-      clearTimeout(flipHintTimer);
-    }
-    flipHintTimer = setTimeout(() => {
-      if (isExtracted.value && !isFlipped.value) {
-        showFlipHint.value = true;
-      }
-    }, 2000);
+    // 未抽出前只允许点击 Check 触发抽信，其他位置点击无效。
     return;
   }
 
@@ -238,6 +264,8 @@ onMounted(() => {
   showArrivalTip.value = true;
   updateSceneScale();
   window.addEventListener("resize", updateSceneScale);
+  window.visualViewport?.addEventListener("resize", updateSceneScale);
+  window.visualViewport?.addEventListener("scroll", updateSceneScale);
   introTimer = setTimeout(() => {
     isIntroDone.value = true;
   }, 1500);
@@ -250,6 +278,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateSceneScale);
+  window.visualViewport?.removeEventListener("resize", updateSceneScale);
+  window.visualViewport?.removeEventListener("scroll", updateSceneScale);
+  document.documentElement.style.removeProperty("--app-vh");
+  document.documentElement.style.removeProperty("--app-vw");
   document.documentElement.classList.remove("reading-scroll");
   document.body.classList.remove("reading-scroll");
   if (introTimer) {
@@ -276,6 +308,7 @@ onBeforeUnmount(() => {
 :root {
   --clr: #fcfcf589;
   --intro-landing-offset: 24px;
+  --mobile-ui-simulated-inset: 0px;
   /*信封整体宽度*/
   --envelope-width: 700px;
   --flip-scale-end: 1.5;
@@ -296,16 +329,19 @@ onBeforeUnmount(() => {
 }
 
 html {
+  height: var(--app-vh, 100dvh);
   overflow: hidden;
 }
 body {
   width: 100%;
-  min-height: 100vh;
+  min-height: var(--app-vh, 100dvh);
   overflow: hidden;
   background-color: var(--clr);
   display: flex;
   justify-content: center;
   align-items: center;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 body::before {
   content: "";
@@ -524,6 +560,8 @@ body.reading-scroll::-webkit-scrollbar {
   top: -30px;
   color: #fff;
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
+  pointer-events: auto;
+  cursor: pointer;
 }
 .check-hint-fade-enter-active,
 .check-hint-fade-leave-active {
@@ -1024,6 +1062,10 @@ body.reading-scroll::-webkit-scrollbar {
     --flip-y-end: -15px;
   }
 
+  body {
+    min-height: var(--app-vh, 100dvh);
+  }
+
   /* 手机端抽信阶段向上移动更大，放宽顶部裁剪避免被切边 */
   .container.extracted,
   .container.reading {
@@ -1058,7 +1100,7 @@ body.reading-scroll::-webkit-scrollbar {
 
   /* 手机端翻页提示改为横排在底部 */
   .container .flip-hint {
-    top: calc(100% + 14px);
+    top: calc(100% - 20px);
     bottom: auto;
     left: 50%;
     right: auto;
@@ -1093,7 +1135,7 @@ body.reading-scroll::-webkit-scrollbar {
       transform: translateY(-132vh) rotate(-90deg) scale(1.55);
     }
     100% {
-      transform: translateY(min(-128vh, -1170px)) rotate(-90deg) scale(1.55);
+      transform: translateY(min(-128vh, -1140px)) rotate(-90deg) scale(1.55);
     }
   }
 }
