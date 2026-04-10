@@ -1100,7 +1100,7 @@ body.reading-scroll::-webkit-scrollbar {
 
   /* 手机端翻页提示改为横排在底部 */
   .container .flip-hint {
-    top: calc(100% - 20px);
+    top: calc(100% - 30px);
     bottom: auto;
     left: 50%;
     right: auto;
@@ -1135,7 +1135,7 @@ body.reading-scroll::-webkit-scrollbar {
       transform: translateY(-132vh) rotate(-90deg) scale(1.55);
     }
     100% {
-      transform: translateY(min(-128vh, -1140px)) rotate(-90deg) scale(1.55);
+      transform: translateY(min(-128vh, -1100px)) rotate(-90deg) scale(1.55);
     }
   }
 }
