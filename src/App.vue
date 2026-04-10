@@ -275,6 +275,7 @@ onBeforeUnmount(() => {
 }
 :root {
   --clr: #fcfcf589;
+  --intro-landing-offset: 24px;
   /*信封整体宽度*/
   --envelope-width: 700px;
   --flip-scale-end: 1.5;
@@ -392,7 +393,7 @@ body.reading-scroll::-webkit-scrollbar {
   position: relative;
   width: var(--envelope-width);
   height: 600px;
-  transform: scale(var(--scene-scale));
+  transform: translateY(var(--intro-landing-offset)) scale(var(--scene-scale));
   transform-origin: center bottom;
   overflow: visible;
   clip-path: inset(-100vh 0 1px 0);
@@ -458,20 +459,24 @@ body.reading-scroll::-webkit-scrollbar {
 @keyframes bounceInUp {
   from {
     opacity: 0;
-    transform: translateY(2000px) scale(calc(var(--scene-scale) * 0.1));
+    transform: translateY(calc(var(--intro-landing-offset) + 2000px))
+      scale(calc(var(--scene-scale) * 0.1));
   }
   65% {
     opacity: 1;
-    transform: translateY(-100px) scale(var(--scene-scale));
+    transform: translateY(calc(var(--intro-landing-offset) - 100px))
+      scale(var(--scene-scale));
   }
   75% {
-    transform: translateY(20px) scale(var(--scene-scale));
+    transform: translateY(calc(var(--intro-landing-offset) + 20px))
+      scale(var(--scene-scale));
   }
   90% {
-    transform: translateY(-20px) scale(var(--scene-scale));
+    transform: translateY(calc(var(--intro-landing-offset) - 20px))
+      scale(var(--scene-scale));
   }
   100% {
-    transform: translateY(0) scale(var(--scene-scale));
+    transform: translateY(var(--intro-landing-offset)) scale(var(--scene-scale));
   }
 }
 .container .letter-wrapper {
@@ -967,7 +972,7 @@ body.reading-scroll::-webkit-scrollbar {
     transform: translateY(-105vh) rotate(-90deg) scale(1.4);
   }
   100% {
-    transform: translateY(min(-100vh, -850px)) rotate(-90deg) scale(1.4);
+    transform: translateY(min(-100vh, -890px)) rotate(-90deg) scale(1.4);
   }
 }
 @keyframes wrapperDrop {
@@ -1012,6 +1017,7 @@ body.reading-scroll::-webkit-scrollbar {
 
 @media (max-width: 768px) {
   :root {
+    --intro-landing-offset: -16px;
     --flip-scale-end: 1.2;
     --flip-y-start: 0;
     --flip-y-mid: -5px;
@@ -1069,13 +1075,13 @@ body.reading-scroll::-webkit-scrollbar {
       transform: translateY(0) rotate(0deg) scale(1);
     }
     20% {
-      transform: translateY(-160vh) rotate(0deg) scale(1.2);
+      transform: translateY(-168vh) rotate(0deg) scale(1.2);
     }
     50% {
-      transform: translateY(-125vh) rotate(-90deg) scale(1.55);
+      transform: translateY(-132vh) rotate(-90deg) scale(1.55);
     }
     100% {
-      transform: translateY(min(-120vh, -1050px)) rotate(-90deg) scale(1.55);
+      transform: translateY(min(-128vh, -1120px)) rotate(-90deg) scale(1.55);
     }
   }
 }
