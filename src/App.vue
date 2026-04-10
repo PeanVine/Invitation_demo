@@ -1024,6 +1024,16 @@ body.reading-scroll::-webkit-scrollbar {
     --flip-y-end: -15px;
   }
 
+  /* 手机端抽信阶段向上移动更大，放宽顶部裁剪避免被切边 */
+  .container.extracted,
+  .container.reading {
+    clip-path: inset(-220vh -100vw -120vh -100vw);
+  }
+
+  .container.extracted {
+    transition-delay: 0s;
+  }
+
   /* 手机端覆盖提示气泡动画，使其等比缩小至 0.8 */
   @keyframes tipDropIn {
     from {
@@ -1048,15 +1058,17 @@ body.reading-scroll::-webkit-scrollbar {
 
   /* 手机端翻页提示改为横排在底部 */
   .container .flip-hint {
-    top: 85%; /* 原先 bottom:-80px 会掉出屏幕外面，这里调上来放到容器内部的下方区域 */
+    top: calc(100% + 14px);
     bottom: auto;
     left: 50%;
     right: auto;
-    width: 100%;
+    width: max-content;
+    max-width: calc(100vw - 24px);
     transform: translateX(-50%);
     writing-mode: horizontal-tb;
     letter-spacing: 4px;
     text-align: center;
+    white-space: nowrap;
   }
   /* 手机端向下渐入 */
   .flip-hint-fade-enter-from {
@@ -1081,7 +1093,7 @@ body.reading-scroll::-webkit-scrollbar {
       transform: translateY(-132vh) rotate(-90deg) scale(1.55);
     }
     100% {
-      transform: translateY(min(-128vh, -1120px)) rotate(-90deg) scale(1.55);
+      transform: translateY(min(-128vh, -1170px)) rotate(-90deg) scale(1.55);
     }
   }
 }
