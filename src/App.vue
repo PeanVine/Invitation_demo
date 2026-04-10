@@ -1,7 +1,7 @@
 <template>
   <p class="arrival-tip" :class="{ show: showArrivalTip, leave: isIntroDone }">
     <span class="arrival-tip-icon" aria-hidden="true"></span>
-    <span>叮! 有一封的邮件送达!</span>
+    <span>叮咚! 您有一封新的邮件送达!</span>
   </p>
   <div
     class="container"
@@ -30,7 +30,13 @@
         </p>
       </transition>
       <p class="inner-greeting">欢迎回家!</p>
-      <div class="cover" @click="openEnvelope"></div>
+      <div class="cover" @click="openEnvelope">
+        <img
+          src="/assets/Tenzor_Logo.png"
+          alt="Tenzor Logo"
+          class="cover-logo"
+        />
+      </div>
       <div
         class="letter"
         :class="{
@@ -39,9 +45,80 @@
         }"
         @click="handleLetterClick"
       >
-        <div class="letter-page" :class="{ flipped: isFlipped }">
-          <img src="/assets/封面.png" alt="封面" class="letter-face front" />
-          <img src="/assets/内页.png" alt="内页" class="letter-face back" />
+        <div
+          class="letter-book"
+          :class="{
+            flipped: isFlipped,
+            mobile: isMobile,
+            'focus-left': focusState === 'left',
+            'focus-right': focusState === 'right',
+          }"
+        >
+          <!-- 翻页后的右面 (底层不动的页) -->
+          <div
+            class="book-page right-page"
+            :class="{ interactive: isFlipped && !isMobile }"
+            @click="handlePageClick('right')"
+          >
+            <img src="/assets/内页.png" alt="内页" class="letter-face" />
+
+            <!-- 新增的内页文字部分 -->
+            <div class="inner-typography">
+              <p class="greeting">Hi, Tenzor:</p>
+              <p class="indent-p">
+                2026年4月8日，在西安交通大学130周年校庆之际，挑战网也将迎来25周年站庆。
+              </p>
+              <p class="indent-p">
+                冬去春又来。挑战又走过了十个年头，现在的挑战，有技术、视频、美工三个部门，有七十多名成员。
+              </p>
+              <p class="indent-p">
+                时过境迁，学业的担子越来越重，ai浪潮高涨不休，但挑战依旧，我们也仍在迎接时代挑战。
+              </p>
+              <p class="indent-p">
+                已经毕业了的Tenzor，夜深人静的时候，你会不会偶示想起西南角的小阁楼，想起自己全心全意迎接挑战的样子？
+              </p>
+              <p class="indent-p">
+                衷心感谢各位前辈长久以来对挑战的支持。在这个特殊的日子，诚挚邀请各位再聚阁楼，再话当年。
+              </p>
+              <p class="indent-p">
+                我们也精心准备了一份小礼物，待您来时，为您献上。
+              </p>
+              <div class="inner-footer">
+                <p class="center-text">时间：2026年4月14日</p>
+                <p class="right-text">挑战网25周年站庆筹备组</p>
+              </div>
+              <p class="support-footer">支持我们（支付宝）</p>
+            </div>
+          </div>
+          <!-- 可以翻动的页 -->
+          <div
+            class="book-page flip-page"
+            :class="{ interactive: isFlipped && !isMobile }"
+            @click="handlePageClick('left')"
+          >
+            <!-- 封面 -->
+            <div class="page-face front-face">
+              <img src="/assets/封面.png" alt="封面" class="letter-face" />
+              <div class="typography-layout">
+                <div class="header-text">邀请函</div>
+                <div class="center-box">
+                  <div class="split-line"></div>
+                  <div class="content left">
+                    <span>地点</span>
+                  </div>
+                  <div class="content right">
+                    <span>西安交通大学</span>
+                    <span>挑战网工作室</span>
+                  </div>
+                </div>
+                <div class="footer-text">INVITATION</div>
+              </div>
+            </div>
+            <!-- 翻开后的左面 (背身) -->
+            <div class="page-face back-face">
+              <img src="/assets/封面.png" alt="左面" class="letter-face" />
+            </div>
+          </div>
         </div>
       </div>
       <div class="envelope" @click="hideCheckHint">
@@ -72,6 +149,9 @@ const showUnopenedHint = ref(false);
 const showCheckHint = ref(false);
 const showFlipHint = ref(false);
 const sceneScale = ref(0.88);
+const envelopeBaseWidth = 540;
+const isMobile = ref(false);
+const focusState = ref<"center" | "left" | "right">("center");
 
 let introTimer: ReturnType<typeof setTimeout> | null = null;
 let hintTimer: ReturnType<typeof setTimeout> | null = null;
@@ -79,9 +159,22 @@ let checkHintTimer: ReturnType<typeof setTimeout> | null = null;
 let flipHintTimer: ReturnType<typeof setTimeout> | null = null;
 
 const updateSceneScale = () => {
-  const widthScale = (window.innerWidth - 24) / 500;
+  isMobile.value = window.innerWidth <= 768;
+  const widthScale = (window.innerWidth - 24) / envelopeBaseWidth;
   const heightScale = (window.innerHeight - 24) / 600;
-  sceneScale.value = Math.min(0.88, widthScale, heightScale);
+  let newScale = Math.min(0.78, widthScale, heightScale);
+  if (isMobile.value) {
+    // 手机端将整体信封场景再等比缩小一些，弄成0.8
+    newScale *= 0.8;
+  }
+  sceneScale.value = newScale;
+};
+
+const handlePageClick = (side: "left" | "right") => {
+  if (isMobile.value) return;
+  if (isFlipped.value) {
+    focusState.value = side;
+  }
 };
 
 const hideCheckHint = () => {
@@ -173,6 +266,7 @@ onBeforeUnmount(() => {
   }
 });
 </script>
+
 <style>
 * {
   box-sizing: border-box;
@@ -180,12 +274,26 @@ onBeforeUnmount(() => {
   padding: 0;
 }
 :root {
-  --clr: #94ee6a89;
+  --clr: #fcfcf589;
+  /*信封整体宽度*/
+  --envelope-width: 700px;
   --flip-scale-end: 1.5;
   --flip-y-start: 0;
   --flip-y-mid: 10px;
   --flip-y-end: 15vh;
+  /* ===👇 调试信封颜色的位置 👇=== */
+  /* 通过调节 filter 中的 sepia/hue-rotate/brightness 给外壳上色 */
+  --envelope-red-filter: saturate(0) sepia(0.2) hue-rotate(10deg)
+    brightness(2.3) contrast(0.95);
+  /* 信封内衬背景，也采用滤镜统一控制 */
+  --envelope-inner-filter: saturate(0.15) sepia(0.2) hue-rotate(10deg)
+    brightness(3) contrast(0.8);
+  /* 翻开折角的内侧颜色，比外侧略深一点产生阴影感 */
+  --envelope-ivory-filter: saturate(0.15) sepia(0.2) hue-rotate(10deg)
+    brightness(2.1) contrast(0.75);
+  /* ============================ */
 }
+
 html {
   overflow: hidden;
 }
@@ -193,10 +301,24 @@ body {
   width: 100%;
   min-height: 100vh;
   overflow: hidden;
-  background: var(--clr);
+  background-color: var(--clr);
   display: flex;
   justify-content: center;
   align-items: center;
+}
+body::before {
+  content: "";
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 100vh;
+  height: 100vw;
+  background-image: url(/assets/page_bg.jpg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: translate(-50%, -50%) rotate(90deg);
+  z-index: -10;
 }
 html.reading-scroll,
 body.reading-scroll {
@@ -215,7 +337,7 @@ body.reading-scroll::-webkit-scrollbar {
   position: fixed;
   top: 2vh;
   left: 50%;
-  transform: translate(-50%, -26px) scale(0.92);
+  transform: translate(-50%, -26px);
   opacity: 0;
   z-index: 20;
   padding: 7px 12px 7px 9px;
@@ -261,14 +383,14 @@ body.reading-scroll::-webkit-scrollbar {
   animation: 0.3s ease-out 0.3s forwards tipDropIn;
 }
 .arrival-tip.show .arrival-tip-icon {
-  animation: 1s ease-in-out 0.5s 2 tipIconShake;
+  animation: none;
 }
 .arrival-tip.leave {
   animation: 0.28s ease-in forwards tipFadeOut;
 }
 .container {
   position: relative;
-  width: 500px;
+  width: var(--envelope-width);
   height: 600px;
   transform: scale(var(--scene-scale));
   transform-origin: center bottom;
@@ -288,7 +410,7 @@ body.reading-scroll::-webkit-scrollbar {
   pointer-events: auto;
 }
 .container.extracted {
-  clip-path: inset(-100vh 0 -100vh 0);
+  clip-path: inset(-100vh -100vw -100vh -100vw);
   transition-delay: 0.2s;
 }
 .container.reading {
@@ -299,21 +421,21 @@ body.reading-scroll::-webkit-scrollbar {
 @keyframes tipDropIn {
   from {
     opacity: 0;
-    transform: translate(-50%, -26px) scale(0.92);
+    transform: translate(-50%, -26px);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0) scale(1);
+    transform: translate(-50%, 0);
   }
 }
 @keyframes tipFadeOut {
   from {
     opacity: 1;
-    transform: translate(-50%, 0) scale(1);
+    transform: translate(-50%, 0);
   }
   to {
     opacity: 0;
-    transform: translate(-50%, -12px) scale(0.98);
+    transform: translate(-50%, -26px);
   }
 }
 @keyframes tipIconShake {
@@ -356,16 +478,27 @@ body.reading-scroll::-webkit-scrollbar {
   position: relative;
   width: 100%;
   height: 360px;
-  background-image: url(/assets/bg.png);
-  background-repeat: no-repeat;
   display: flex;
   justify-content: center;
   align-items: flex-end;
 }
+.container .letter-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url(/assets/bg.png);
+  background-repeat: no-repeat;
+  /* 应用相同的米黄色滤镜 */
+  filter: var(--envelope-inner-filter);
+  z-index: 0;
+}
 .container .letter-wrapper .action-hint {
   position: absolute;
   top: -44px;
-  left: 0;
+  left: 2%;
   width: 100%;
   text-align: center;
   font-size: 30px;
@@ -380,8 +513,10 @@ body.reading-scroll::-webkit-scrollbar {
   opacity: 0;
   z-index: 2;
 }
+
+/*check最终停留位置*/
 .container .letter-wrapper .action-hint-check {
-  top: -70px;
+  top: -30px;
   color: #fff;
   text-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
 }
@@ -441,36 +576,45 @@ body.reading-scroll::-webkit-scrollbar {
 }
 .container .flip-hint {
   position: absolute;
-  top: 82vh;
-  left: 0;
-  width: 100%;
-  text-align: center;
+  top: 30%;
+  right: -30px;
+  width: auto;
   font-size: 22px;
   font-weight: 700;
   color: #5a2e0c;
-  letter-spacing: 1px;
-  z-index: 7;
+  letter-spacing: 8px;
+  writing-mode: vertical-rl;
+  transform: translateY(-50%);
+  z-index: 10;
   pointer-events: none;
   user-select: none;
 }
-.flip-hint-fade-enter-active,
-.flip-hint-fade-leave-active {
+.flip-hint-fade-enter-active {
+  /* 渐入的同时向右移动并减速(ease-out 曲线自带减速效果) */
   transition:
-    opacity 0.4s ease,
-    transform 0.4s ease;
+    opacity 0.8s ease-out,
+    transform 0.8s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+.flip-hint-fade-leave-active {
+  /* 消失时要求0.2秒内消失 */
+  transition: opacity 0.2s ease;
 }
 .flip-hint-fade-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  /* 从左边偏 -30px 的位置开始，这样到原位 0 就形成了“向右”动作 */
+  transform: translate(-30px, -50%);
 }
 .flip-hint-fade-leave-to {
   opacity: 0;
-  transform: translateY(120vh);
+  /* 原地消失即可，也可以微调 translate 保持平滑 */
+  transform: translateY(-50%);
 }
+
+/* 闭合三角封口 */
 .container .letter-wrapper .cover {
   position: absolute;
   width: 100%;
-  height: 210px;
+  height: 300px;
   z-index: 5;
   background-image: url(/assets/cover-front.png);
   background-position: 0;
@@ -480,10 +624,37 @@ body.reading-scroll::-webkit-scrollbar {
   right: 3px;
   cursor: pointer;
   transform-origin: 0 5px;
+  filter: var(--envelope-red-filter);
+  /* 为了支持内部logo的透视隐藏效果 */
+  transform-style: preserve-3d;
 }
+
+.container .letter-wrapper .cover .cover-logo {
+  position: absolute;
+  bottom: 10px; /* 控制 Logo在中间偏下三角的位置 */
+  left: 52%;
+  width: 95px;
+  height: auto;
+  transform: translateX(-50%);
+  opacity: 0.85;
+  /* 翻开时随着背面隐藏 */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: opacity 0.15s ease;
+}
+
+/* 刚开始翻开时立刻把 logo 隐藏掉 */
+.container .letter-wrapper.opened .cover .cover-logo {
+  opacity: 0;
+}
+
+/* 展开三角封口 */
 .container .letter-wrapper.opened .cover {
   animation: 0.3s forwards rollingOver;
+  filter: var(--envelope-ivory-filter);
 }
+
+/* 三角封口翻转动画 */
 @keyframes rollingOver {
   10% {
     background-image: url(/assets/cover-front.png);
@@ -496,14 +667,18 @@ body.reading-scroll::-webkit-scrollbar {
 }
 .container .letter-wrapper .letter {
   position: absolute;
-  top: -110px;
+  top: auto;
+  bottom: 0;
   z-index: 3;
-  width: 450px;
-  height: 675px;
+  /* 信的高度及宽度 */
+  width: calc(var(--envelope-width) * 0.95);
+  height: calc(var(--envelope-width) * 0.63);
+  min-height: 320px;
+  max-height: 420px;
   margin: 0;
   background: transparent;
-  box-shadow: none;
-  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  overflow: visible;
   transform: translateY(180px);
 }
 .container .letter-wrapper .letter.reading {
@@ -513,42 +688,246 @@ body.reading-scroll::-webkit-scrollbar {
 .container .letter-wrapper .letter.clickable {
   cursor: pointer;
 }
-.container .letter-wrapper .letter .letter-page {
+.container .letter-wrapper .letter .letter-book {
   position: relative;
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transform-origin: center center;
-  transition: transform 0.55s ease;
+  /* 添加透视，让3D翻转更真实 */
+  perspective: 1500px;
+  /* 整体平移时间 */
+  transition: transform 1.2s cubic-bezier(0.2, 0.7, 0.16, 1);
+  container-type: size;
 }
-.container .letter-wrapper .letter .letter-page.flipped {
-  animation: 2s cubic-bezier(0.2, 0.7, 0.16, 1) forwards flipToInnerZoom;
+/* 因为.letter局部转了-90度，原本的Y轴变成了屏幕的水平方向(向右)。整体向右移动即translateY(50%)，调小可以偏左 */
+.container .letter-wrapper .letter .letter-book.flipped {
+  transform: translateY(30%);
 }
-.container .letter-wrapper .letter .letter-face {
+.container .letter-wrapper .letter .letter-book.flipped.focus-left {
+  transform: translateY(70%);
+}
+.container .letter-wrapper .letter .letter-book.flipped.focus-right {
+  transform: translateY(30%);
+}
+.container .letter-wrapper .letter .letter-book.flipped.mobile {
+  transform: translateY(0%);
+}
+
+.container .letter-wrapper .letter .book-page {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  border: 0;
-  object-fit: cover;
-  object-position: top;
+  transform-style: preserve-3d;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+}
+.container .letter-wrapper .letter .book-page.interactive {
+  cursor: pointer;
+}
+
+.container .letter-wrapper .letter .right-page {
+  z-index: 1;
+}
+
+.container .letter-wrapper .letter .flip-page {
+  /* .letter逆时针旋90度后，局部的top变成了屏幕的left。所以沿着局部top旋转即是在屏幕上像书一样横向翻页 */
+  transform-origin: top center;
+  transition: transform 1.2s cubic-bezier(0.2, 0.7, 0.16, 1);
+  z-index: 2;
+}
+
+/* 书页翻开。正对着视野沿X轴旋转180度 */
+.container .letter-wrapper .letter .letter-book.flipped .flip-page {
+  transform: rotateX(180deg);
+}
+
+/* 手机端直接翻转到背部(360度) 并在Z轴后退以免与背部重叠 */
+.container .letter-wrapper .letter .letter-book.flipped.mobile .flip-page {
+  transform: rotateX(360deg) translateZ(-5px);
+}
+
+.container .letter-wrapper .letter .page-face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* 隐藏背板 */
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: var(--clr);
+}
+
+.container .letter-wrapper .letter .front-face {
+  z-index: 2;
+}
+
+/* 文字排版 */
+.typography-layout {
+  position: absolute;
+  top: 50%;
+  left: 48%;
+  transform: translate(-50%, -50%) rotate(90deg);
+  display: flex;
+  flex-direction: column;
+  color: #fff;
+  z-index: 10;
+  pointer-events: none;
+  font-weight: 250;
+}
+.header-text {
+  align-self: flex-start;
+  font-size: 1.1rem;
+  letter-spacing: 0rem;
+  margin-bottom: 0.2rem;
+  margin-left: 2.5rem;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+.center-box {
+  position: relative;
+  width: 240px;
+  height: 80px;
+  border: 1px solid #fff;
+  background: transparent;
+}
+.split-line {
+  position: absolute;
+  top: 70%;
+  left: 33%;
+  width: 260px;
+  height: 1px;
+  background: #fff;
+  transform: translate(-50%, -50%) rotate(-64deg);
+}
+.content.left {
+  position: absolute;
+  bottom: 35%;
+  left: 10%;
+}
+.content.left span {
+  font-size: 1.1rem;
+  letter-spacing: 0rem;
+}
+.content.right {
+  position: absolute;
+  top: 16%;
+  right: 6%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.content.right span:first-child {
+  font-size: 1.1rem;
+}
+.content.right span:last-child {
+  margin-right: 1rem;
+  font-size: 1.1rem;
+}
+.footer-text {
+  align-self: flex-end;
+  font-size: 1.1rem;
+  letter-spacing: 0rem;
+  margin-top: 0.4rem;
+  margin-right: 4.5rem;
+}
+
+/* 内页文字排版（与封面同层覆盖在图片上） */
+.inner-typography {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100cqh;
+  height: 95cqw;
+  transform: translate(-50%, -50%) rotate(90deg);
+  z-index: 10;
+  pointer-events: none;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 34px 42px 26px;
+  color: #222;
+  line-height: 1.6;
+}
+
+.inner-typography p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.inner-typography .greeting {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.inner-typography .indent-p {
+  font-weight: 400;
+  font-size: 0.9rem;
+  text-indent: 2em;
+}
+
+.inner-typography .inner-footer {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inner-typography .center-text {
+  align-self: center;
+  font-size: 0.82rem;
+}
+
+.inner-typography .right-text {
+  align-self: flex-end;
+  font-size: 0.82rem;
+}
+
+.support-footer {
+  align-self: flex-start;
+  padding-top: 8px;
+  padding-left: 10px;
+  font-size: 0.9rem;
+}
+
+/* 左侧页在翻开前背对着我们，所以沿X周预先转180度 */
+.container .letter-wrapper .letter .back-face {
+  transform: rotateX(180deg);
+  z-index: 1;
+  /* ======👇调试左侧页边框 👇======== */
+  /* 可以修改 `4px` 调整粗细，或者修改 `red` 调整颜色 */
+  border-style: solid;
+  border-color: rgb(129, 0, 0);
+  border-width: 8px 20px 8px 20px;
+  box-sizing: border-box;
+  /* ============================== */
+}
+
+/* 给翻开后左侧页内的图片加上黑白滤镜 */
+.container .letter-wrapper .letter .back-face .letter-face {
+  /* ======👇调试图片黑白滤镜👇======== */
+  /* grayscale() 是纯黑白，opacity() 则可以通过降低透明度透出底层底色，从而让黑色减淡 */
+  filter: grayscale(100%) opacity(100%);
+  /* ================================ */
+}
+
+/* 由于外层已经是正确的宽长比了，图片需要像之前一样竖转横 */
+.container .letter-wrapper .letter .letter-face {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100cqh;
+  height: 100cqw;
+  border: 0;
+  object-fit: cover;
   display: block;
-}
-.container .letter-wrapper .letter .letter-face.back {
-  transform: rotateY(180deg);
-}
-@keyframes flipToInnerZoom {
-  0% {
-    transform: rotateY(0deg) scale(1) translateY(var(--flip-y-start));
-  }
-  20% {
-    transform: rotateY(90deg) scale(1.2) translateY(var(--flip-y-mid));
-  }
-  100% {
-    transform: rotateY(180deg) scale(var(--flip-scale-end)) translateY(var(--flip-y-end));
-  }
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center center;
 }
 .container .letter-wrapper.opened .letter {
   animation: 0.8s 0.08s forwards letterBounceInUp;
@@ -558,8 +937,9 @@ body.reading-scroll::-webkit-scrollbar {
   animation: 0.75s 0s forwards wrapperDrop;
 }
 
+/*信抬升动画*/
 .container .letter-wrapper.extracted .letter {
-  animation: 1s 0s forwards letterLiftUp;
+  animation: 2s 0s forwards letterLiftUp;
 }
 @keyframes letterBounceInUp {
   from {
@@ -575,15 +955,19 @@ body.reading-scroll::-webkit-scrollbar {
     transform: translateY(0);
   }
 }
+/*封面旋并放大动画*/
 @keyframes letterLiftUp {
   from {
-    transform: translateY(0);
+    transform: translateY(0) rotate(0deg) scale(1);
   }
-  40% {
-    transform: translateY(-150vh);
+  20% {
+    transform: translateY(-150vh) rotate(-0deg) scale(1.1);
+  }
+  50% {
+    transform: translateY(-105vh) rotate(-90deg) scale(1.4);
   }
   100% {
-    transform: translateY(min(-130vh, -950px));
+    transform: translateY(min(-100vh, -850px)) rotate(-90deg) scale(1.4);
   }
 }
 @keyframes wrapperDrop {
@@ -596,7 +980,7 @@ body.reading-scroll::-webkit-scrollbar {
 }
 .container .letter-wrapper .envelope {
   position: absolute;
-  width: 500px;
+  width: var(--envelope-width);
   height: 360px;
   z-index: 4;
   background-image: url(/assets/envelope.png);
@@ -610,6 +994,7 @@ body.reading-scroll::-webkit-scrollbar {
   padding-bottom: 40px;
   font-size: 24px;
   color: #000;
+  filter: var(--envelope-red-filter);
 }
 .container .letter-wrapper .envelope b {
   opacity: 0.3;
@@ -631,6 +1016,67 @@ body.reading-scroll::-webkit-scrollbar {
     --flip-y-start: 0;
     --flip-y-mid: -5px;
     --flip-y-end: -15px;
+  }
+
+  /* 手机端覆盖提示气泡动画，使其等比缩小至 0.8 */
+  @keyframes tipDropIn {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -26px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+  @keyframes tipFadeOut {
+    from {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    to {
+      opacity: 0;
+      transform: translate(-50%, -26px);
+    }
+  }
+
+  /* 手机端翻页提示改为横排在底部 */
+  .container .flip-hint {
+    top: 85%; /* 原先 bottom:-80px 会掉出屏幕外面，这里调上来放到容器内部的下方区域 */
+    bottom: auto;
+    left: 50%;
+    right: auto;
+    width: 100%;
+    transform: translateX(-50%);
+    writing-mode: horizontal-tb;
+    letter-spacing: 4px;
+    text-align: center;
+  }
+  /* 手机端向下渐入 */
+  .flip-hint-fade-enter-from {
+    opacity: 0;
+    transform: translate(-50%, -30px); /* 偏上，恢复时往下形成向下渐入效果 */
+  }
+  /* 手机端快速渐出 */
+  .flip-hint-fade-leave-to {
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+
+  /* 手机端覆盖抽取动画，让信件抽出来后挪得更高一点 */
+  @keyframes letterLiftUp {
+    from {
+      transform: translateY(0) rotate(0deg) scale(1);
+    }
+    20% {
+      transform: translateY(-160vh) rotate(0deg) scale(1.2);
+    }
+    50% {
+      transform: translateY(-125vh) rotate(-90deg) scale(1.55);
+    }
+    100% {
+      transform: translateY(min(-120vh, -1050px)) rotate(-90deg) scale(1.55);
+    }
   }
 }
 </style>
