@@ -266,14 +266,43 @@ onMounted(() => {
   window.addEventListener("resize", updateSceneScale);
   window.visualViewport?.addEventListener("resize", updateSceneScale);
   window.visualViewport?.addEventListener("scroll", updateSceneScale);
-  introTimer = setTimeout(() => {
-    isIntroDone.value = true;
-  }, 1500);
-  hintTimer = setTimeout(() => {
-    if (!isOpened.value) {
-      showUnopenedHint.value = true;
-    }
-  }, 3000);
+
+  // 初次加载优化：预加载重型图片后再开始渲染动画，防止首次绘制卡顿
+  const preloadUrls = [
+    "/assets/bg.png",
+    "/assets/cover-front.png",
+    "/assets/envelope.png",
+    "/assets/Tenzor_Logo.png",
+    "/assets/page_bg.jpg",
+  ];
+  let loaded = 0;
+  const startTime = Date.now();
+
+  const startIntro = () => {
+    // 保证提示气泡至少有 1.5 秒的展示时间，即使图片瞬间从缓存加载完也不会闪退
+    const elapsed = Date.now() - startTime;
+    const delay = Math.max(1500 - elapsed, 100);
+
+    introTimer = setTimeout(() => {
+      isIntroDone.value = true;
+    }, delay);
+    hintTimer = setTimeout(() => {
+      if (!isOpened.value) {
+        showUnopenedHint.value = true;
+      }
+    }, delay + 1500);
+  };
+
+  preloadUrls.forEach((url) => {
+    const img = new Image();
+    img.onload = img.onerror = () => {
+      loaded++;
+      if (loaded === preloadUrls.length) {
+        startIntro();
+      }
+    };
+    img.src = url;
+  });
 });
 
 onBeforeUnmount(() => {
@@ -304,6 +333,14 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  /* 禁止电脑端选中文字和图片拖拽 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  /* 禁止手机端点击时出现蓝色/灰色高亮背景框 */
+  -webkit-tap-highlight-color: transparent;
+  /* 移除特定元素的焦点外边框 */
+  outline: none;
 }
 :root {
   --clr: #fcfcf589;
@@ -359,8 +396,9 @@ body::before {
 }
 html.reading-scroll,
 body.reading-scroll {
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: auto;
+  /* 允许缩放和多向平移，修复部分手机端浏览器因强制屏蔽横向滚动导致双指失效 */
+  touch-action: pan-x pan-y pinch-zoom;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -429,17 +467,25 @@ body.reading-scroll::-webkit-scrollbar {
   position: relative;
   width: var(--envelope-width);
   height: 600px;
-  transform: translateY(var(--intro-landing-offset)) scale(var(--scene-scale));
+  transform: translate3d(0, var(--intro-landing-offset), 0)
+    scale(var(--scene-scale));
   transform-origin: center bottom;
   overflow: visible;
-  clip-path: inset(-100vh 0 1px 0);
+  /* 基础的下部裁剪，控制信封底部隐藏 */
+  clip-path: inset(-100vh 0 0 0);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
   transition: clip-path 0s linear;
-  opacity: 0;
+  /* 将基础透明度设为极小值而非0，迫使浏览器在开场加载阶段就把这个庞大的组件完整绘制并上传到GPU缓存中，避免动画开始时瞬间暴增开销 */
+  opacity: 0.001;
   pointer-events: none;
+  /* 提前挂载硬件加速层，防止添加 .ready 瞬间因重新分层导致计算卡顿 */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
 }
 .container.ready {
   animation: 1.2s cubic-bezier(0.37, -0.09, 0, 1.6) bounceInUp;
@@ -447,11 +493,12 @@ body.reading-scroll::-webkit-scrollbar {
   pointer-events: auto;
 }
 .container.extracted {
-  clip-path: inset(-100vh -100vw -100vh -100vw);
-  transition-delay: 0.2s;
+  clip-path: inset(-9999px -9999px -9999px -9999px);
+  /* 👇 抽出信时，下部裁剪区域取消的过渡动画时长调节 */
+  transition: clip-path 0.1s ease-in-out;
 }
 .container.reading {
-  clip-path: inset(-100vh -100vw -100vh -100vw);
+  clip-path: inset(-9999px -9999px -9999px -9999px);
   transition: clip-path 0.12s ease-out;
   transition-delay: 0s;
 }
@@ -495,24 +542,25 @@ body.reading-scroll::-webkit-scrollbar {
 @keyframes bounceInUp {
   from {
     opacity: 0;
-    transform: translateY(calc(var(--intro-landing-offset) + 2000px))
+    transform: translate3d(0, calc(var(--intro-landing-offset) + 2000px), 0)
       scale(calc(var(--scene-scale) * 0.1));
   }
   65% {
     opacity: 1;
-    transform: translateY(calc(var(--intro-landing-offset) - 100px))
+    transform: translate3d(0, calc(var(--intro-landing-offset) - 100px), 0)
       scale(var(--scene-scale));
   }
   75% {
-    transform: translateY(calc(var(--intro-landing-offset) + 20px))
+    transform: translate3d(0, calc(var(--intro-landing-offset) + 20px), 0)
       scale(var(--scene-scale));
   }
   90% {
-    transform: translateY(calc(var(--intro-landing-offset) - 20px))
+    transform: translate3d(0, calc(var(--intro-landing-offset) - 20px), 0)
       scale(var(--scene-scale));
   }
   100% {
-    transform: translateY(var(--intro-landing-offset)) scale(var(--scene-scale));
+    transform: translate3d(0, var(--intro-landing-offset), 0)
+      scale(var(--scene-scale));
   }
 }
 .container .letter-wrapper {
@@ -809,7 +857,7 @@ body.reading-scroll::-webkit-scrollbar {
   z-index: 2;
 }
 
-/* 文字排版 */
+/* 封面文字排版 */
 .typography-layout {
   position: absolute;
   top: 50%;
@@ -820,20 +868,22 @@ body.reading-scroll::-webkit-scrollbar {
   color: #fff;
   z-index: 10;
   pointer-events: none;
-  font-weight: 250;
+  /*字体粗细*/
+  font-weight: 700;
+  /*字号大小*/
+  font-size: 16px;
+  font-family: "SimHei", "黑体", sans-serif;
 }
 .header-text {
   align-self: flex-start;
-  font-size: 1.1rem;
   letter-spacing: 0rem;
   margin-bottom: 0.2rem;
   margin-left: 2.5rem;
-  font-family: "Helvetica Neue", Arial, sans-serif;
 }
 .center-box {
   position: relative;
   width: 240px;
-  height: 80px;
+  height: 76px;
   border: 1px solid #fff;
   background: transparent;
 }
@@ -848,34 +898,35 @@ body.reading-scroll::-webkit-scrollbar {
 }
 .content.left {
   position: absolute;
-  bottom: 35%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   left: 10%;
 }
 .content.left span {
-  font-size: 1.1rem;
   letter-spacing: 0rem;
 }
 .content.right {
   position: absolute;
-  top: 16%;
-  right: 6%;
+  height: 100%;
+  right: 10%;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-}
-.content.right span:first-child {
-  font-size: 1.1rem;
+  justify-content: center;
+  gap: 0.6rem;
 }
 .content.right span:last-child {
   margin-right: 1rem;
-  font-size: 1.1rem;
 }
 .footer-text {
   align-self: flex-end;
-  font-size: 1.1rem;
+  font-family: "DengXian", "等线", sans-serif;
   letter-spacing: 0rem;
   margin-top: 0.4rem;
   margin-right: 4.5rem;
+  font-weight: bold;
 }
 
 /* 内页文字排版（与封面同层覆盖在图片上） */
@@ -1004,7 +1055,7 @@ body.reading-scroll::-webkit-scrollbar {
     transform: translateY(0) rotate(0deg) scale(1);
   }
   20% {
-    transform: translateY(-150vh) rotate(-0deg) scale(1.1);
+    transform: translateY(-150vh) rotate(-0deg) scale(1);
   }
   50% {
     transform: translateY(-105vh) rotate(-90deg) scale(1.4);
@@ -1069,7 +1120,7 @@ body.reading-scroll::-webkit-scrollbar {
   /* 手机端抽信阶段向上移动更大，放宽顶部裁剪避免被切边 */
   .container.extracted,
   .container.reading {
-    clip-path: inset(-220vh -100vw -120vh -100vw);
+    clip-path: inset(-9999px -9999px -9999px -9999px);
   }
 
   .container.extracted {
@@ -1100,7 +1151,7 @@ body.reading-scroll::-webkit-scrollbar {
 
   /* 手机端翻页提示改为横排在底部 */
   .container .flip-hint {
-    top: calc(100% - 30px);
+    top: calc(100% - 40px);
     bottom: auto;
     left: 50%;
     right: auto;
