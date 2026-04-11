@@ -160,6 +160,11 @@ let checkHintTimer: ReturnType<typeof setTimeout> | null = null;
 let flipHintTimer: ReturnType<typeof setTimeout> | null = null;
 
 const updateSceneScale = () => {
+  // 处理移动端手势放大时 visualViewport 尺寸缩小导致二次缩小的冲突问题
+  const zoomScale = window.visualViewport?.scale || 1;
+  // 如果处于双指缩放状态，直接跳过重新计算避免引发频繁回流打断原生手势
+  if (zoomScale > 1) return;
+
   const viewportWidth = window.visualViewport?.width ?? window.innerWidth;
   const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
   isMobile.value = viewportWidth <= 768;
@@ -396,6 +401,8 @@ body::before {
 }
 html.reading-scroll,
 body.reading-scroll {
+  height: auto;
+  min-height: 100dvh;
   overflow: auto;
   /* 允许缩放和多向平移，修复部分手机端浏览器因强制屏蔽横向滚动导致双指失效 */
   touch-action: pan-x pan-y pinch-zoom;
@@ -493,12 +500,13 @@ body.reading-scroll::-webkit-scrollbar {
   pointer-events: auto;
 }
 .container.extracted {
-  clip-path: inset(-9999px -9999px -9999px -9999px);
+  /* 抽出后彻底干掉裁剪蒙版，避免在任何缩放级别下误切底部 */
+  clip-path: none;
   /* 👇 抽出信时，下部裁剪区域取消的过渡动画时长调节 */
   transition: clip-path 0.1s ease-in-out;
 }
 .container.reading {
-  clip-path: inset(-9999px -9999px -9999px -9999px);
+  clip-path: none;
   transition: clip-path 0.12s ease-out;
   transition-delay: 0s;
 }
@@ -742,18 +750,28 @@ body.reading-scroll::-webkit-scrollbar {
 /* 展开三角封口 */
 .container .letter-wrapper.opened .cover {
   animation: 0.3s forwards rollingOver;
-  filter: var(--envelope-ivory-filter);
 }
 
 /* 三角封口翻转动画 */
 @keyframes rollingOver {
-  10% {
+  0% {
     background-image: url(/assets/cover-front.png);
+    filter: var(--envelope-red-filter);
+  }
+  50% {
+    background-image: url(/assets/cover-front.png);
+    filter: var(--envelope-red-filter);
+  }
+  50% {
+    z-index: 2;
+    background-image: url(/assets/cover-back.png);
+    filter: var(--envelope-ivory-filter);
   }
   100% {
     z-index: 2;
     background-image: url(/assets/cover-back.png);
     transform: rotateX(-180deg);
+    filter: var(--envelope-ivory-filter);
   }
 }
 .container .letter-wrapper .letter {
@@ -1117,10 +1135,10 @@ body.reading-scroll::-webkit-scrollbar {
     min-height: var(--app-vh, 100dvh);
   }
 
-  /* 手机端抽信阶段向上移动更大，放宽顶部裁剪避免被切边 */
+  /* 手机端抽信阶段向上移动更大，彻底放宽裁剪限制避免被切边 */
   .container.extracted,
   .container.reading {
-    clip-path: inset(-9999px -9999px -9999px -9999px);
+    clip-path: none;
   }
 
   .container.extracted {
