@@ -295,7 +295,7 @@ onMounted(() => {
       if (!isOpened.value) {
         showUnopenedHint.value = true;
       }
-    }, delay + 1500);
+    }, delay + 2000);
   };
 
   preloadUrls.forEach((url) => {
@@ -495,7 +495,7 @@ body.reading-scroll::-webkit-scrollbar {
   perspective: 1000px;
 }
 .container.ready {
-  animation: 1.2s cubic-bezier(0.37, -0.09, 0, 1.6) bounceInUp;
+  animation: 1.8s cubic-bezier(0.37, -0.09, 0, 1.6) bounceInUp;
   opacity: 1;
   pointer-events: auto;
 }
@@ -559,7 +559,7 @@ body.reading-scroll::-webkit-scrollbar {
       scale(var(--scene-scale));
   }
   75% {
-    transform: translate3d(0, calc(var(--intro-landing-offset) + 20px), 0)
+    transform: translate3d(0, calc(var(--intro-landing-offset) + 15px), 0)
       scale(var(--scene-scale));
   }
   90% {
