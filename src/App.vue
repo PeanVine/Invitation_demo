@@ -295,7 +295,7 @@ onMounted(() => {
       if (!isOpened.value) {
         showUnopenedHint.value = true;
       }
-    }, delay + 2000);
+    }, delay + 1800);
   };
 
   preloadUrls.forEach((url) => {
@@ -495,7 +495,7 @@ body.reading-scroll::-webkit-scrollbar {
   perspective: 1000px;
 }
 .container.ready {
-  animation: 1.7s cubic-bezier(0.37, -0.09, 0, 1.6) bounceInUp;
+  animation: 2s cubic-bezier(0.18, 0.88, 0.32, 1) slideInFromTop;
   opacity: 1;
   pointer-events: auto;
 }
@@ -547,23 +547,15 @@ body.reading-scroll::-webkit-scrollbar {
     transform: rotate(0deg);
   }
 }
-@keyframes bounceInUp {
+@keyframes slideInFromTop {
   from {
     opacity: 0;
-    transform: translate3d(0, calc(var(--intro-landing-offset) + 2000px), 0)
-      scale(calc(var(--scene-scale) * 0.1));
-  }
-  65% {
-    opacity: 1;
-    transform: translate3d(0, calc(var(--intro-landing-offset) - 100px), 0)
-      scale(var(--scene-scale));
-  }
-  75% {
-    transform: translate3d(0, calc(var(--intro-landing-offset) + 15px), 0)
+    transform: translate3d(0, calc(var(--intro-landing-offset) - 1000px), 0)
       scale(var(--scene-scale));
   }
   90% {
-    transform: translate3d(0, calc(var(--intro-landing-offset) - 20px), 0)
+    opacity: 1;
+    transform: translate3d(0, var(--intro-landing-offset), 0)
       scale(var(--scene-scale));
   }
   100% {
@@ -578,6 +570,7 @@ body.reading-scroll::-webkit-scrollbar {
   display: flex;
   justify-content: center;
   align-items: flex-end;
+  box-shadow: 2px 4px 8px 0px rgba(0, 0, 0, 0.3);
 }
 .container .letter-wrapper::before {
   content: "";
@@ -1090,14 +1083,16 @@ body.reading-scroll::-webkit-scrollbar {
 }
 @keyframes wrapperDrop {
   from {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
   to {
-    transform: translateY(100vh);
+    transform: translate3d(0, 100vh, 0);
   }
 }
 .container .letter-wrapper .envelope {
   position: absolute;
+  left: 0;
+  bottom: -1px;
   width: var(--envelope-width);
   height: 360px;
   z-index: 4;
@@ -1113,6 +1108,19 @@ body.reading-scroll::-webkit-scrollbar {
   font-size: 24px;
   color: #000;
   filter: var(--envelope-red-filter);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
+  box-shadow:
+    inset 0 -22px 28px rgba(0, 0, 0, 0.22),
+    inset 0 0px 0 rgba(255, 255, 255, 0.2);
+}
+.container .letter-wrapper:not(.opened) .envelope {
+  box-shadow:
+    0 10px 18px rgba(0, 0, 0, 0.2),
+    inset 0 -22px 28px rgba(0, 0, 0, 0.22),
+    inset 0 0px 0 rgba(255, 255, 255, 0.2);
 }
 .container .letter-wrapper .envelope b {
   opacity: 0.3;
