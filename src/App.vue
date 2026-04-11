@@ -76,7 +76,7 @@
                 时过境迁，学业的担子越来越重，ai浪潮高涨不休，而挑战依旧，我们也在迎接时代挑战。
               </p>
               <p class="indent-p">
-                已经毕业了的Tenzor，夜深人静的时候，你会不会偶想起西南角的小阁楼，想起自己全心全意迎接挑战的样子？
+                已经毕业了的Tenzor，夜深人静的时候，你会不会偶尔想起西南角的小阁楼，想起自己全心全意迎接挑战的样子？
               </p>
               <p class="indent-p">
                 衷心感谢各位前辈长久以来对挑战的支持。在这个特殊的日子，诚挚邀请各位再聚阁楼，再话当年。
@@ -495,7 +495,7 @@ body.reading-scroll::-webkit-scrollbar {
   perspective: 1000px;
 }
 .container.ready {
-  animation: 1.8s cubic-bezier(0.37, -0.09, 0, 1.6) bounceInUp;
+  animation: 1.7s cubic-bezier(0.37, -0.09, 0, 1.6) bounceInUp;
   opacity: 1;
   pointer-events: auto;
 }
