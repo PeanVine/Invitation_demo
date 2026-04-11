@@ -73,15 +73,15 @@
                 冬去春又来。挑战又走过了十个年头，现在的挑战，有技术、视频、美工三个部门，有七十多名成员。
               </p>
               <p class="indent-p">
-                时过境迁，学业的担子越来越重，ai浪潮高涨不休，但挑战依旧，我们也仍在迎接时代挑战。
+                时过境迁，学业的担子越来越重，ai浪潮高涨不休，而挑战依旧，我们也在迎接时代挑战。
               </p>
               <p class="indent-p">
-                已经毕业了的Tenzor，夜深人静的时候，你会不会偶示想起西南角的小阁楼，想起自己全心全意迎接挑战的样子？
+                已经毕业了的Tenzor，夜深人静的时候，你会不会偶想起西南角的小阁楼，想起自己全心全意迎接挑战的样子？
               </p>
               <p class="indent-p">
                 衷心感谢各位前辈长久以来对挑战的支持。在这个特殊的日子，诚挚邀请各位再聚阁楼，再话当年。
               </p>
-              <p class="indent-p">
+              <p class="inner-footer-text">
                 我们也精心准备了一份小礼物，待您来时，为您献上。
               </p>
               <div class="inner-footer">
@@ -968,7 +968,7 @@ body.reading-scroll::-webkit-scrollbar {
 
 .inner-typography p {
   margin: 0;
-  line-height: 1.65;
+  line-height: 1.8;
 }
 
 .inner-typography .greeting {
@@ -979,12 +979,15 @@ body.reading-scroll::-webkit-scrollbar {
 
 .inner-typography .indent-p {
   font-weight: 400;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-indent: 2em;
 }
-
+.inner-footer-text {
+  font-weight: 400;
+  font-size: 0.85rem;
+}
 .inner-typography .inner-footer {
-  margin-top: 10px;
+  margin-top: 18px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -992,19 +995,22 @@ body.reading-scroll::-webkit-scrollbar {
 
 .inner-typography .center-text {
   align-self: center;
+  font-weight: 700;
   font-size: 0.82rem;
 }
 
 .inner-typography .right-text {
+  margin-top: 5px;
   align-self: flex-end;
   font-size: 0.82rem;
 }
 
 .support-footer {
   align-self: flex-start;
-  padding-top: 8px;
-  padding-left: 10px;
-  font-size: 0.9rem;
+  padding-top: 28px;
+  font-weight: 500;
+  padding-left: 13px;
+  font-size: 0.82rem;
 }
 
 /* 左侧页在翻开前背对着我们，所以沿X周预先转180度 */
